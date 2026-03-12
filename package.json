@@ -14,8 +14,10 @@
     "@react-three/fiber": "^9.5.0",
     "framer-motion": "^12.35.0",
     "lodash": "^4.17.23",
+    "random-words": "^2.0.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "stats-gl": "^4.1.0",
     "three": "^0.183.2",
     "usehooks-ts": "^3.1.1",
     "zustand": "^5.0.11"

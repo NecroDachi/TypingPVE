@@ -1,6 +1,7 @@
 import { useFrame } from "@react-three/fiber"
 import { useRef } from "react"
 import { Group } from "three"
+import MonsterHP from "../ui/MonsterHp"
 
 export default function Monster() {
 
@@ -14,19 +15,17 @@ export default function Monster() {
   return (
     <group ref={ref} position={[0, 1, -9]}>
 
-      {/* MAIN BLACK BOX */}
+      <MonsterHP position={[0,2,-2]} />
       <mesh>
         <boxGeometry args={[2.5, 2.5, 2.5]} />
         <meshStandardMaterial color="black" />
       </mesh>
 
-      {/* LEFT EYE */}
       <mesh position={[-0.6, 0.5, 1.26]}>
         <boxGeometry args={[0.3, 0.3, 0.1]} />
         <meshStandardMaterial color="white" />
       </mesh>
 
-      {/* RIGHT EYE */}
       <mesh position={[0.6, 0.5, 1.26]}>
         <boxGeometry args={[0.3, 0.3, 0.1]} />
         <meshStandardMaterial color="white" />
@@ -37,11 +36,13 @@ export default function Monster() {
         <mesh
           key={i}
           position={[-0.9 + i * 0.36, -0.7, 1.26]}
+          
         >
           <coneGeometry args={[0.15, 0.4, 4]} />
           <meshStandardMaterial color="white" />
         </mesh>
       ))}
+      
 
     </group>
   )
