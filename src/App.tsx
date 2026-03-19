@@ -3,6 +3,7 @@ import { useGameStore } from "./store/gameStore"
 import useKeyboard from "./hooks/useKeyboard"
 import GameScene from "./game/GameScene"
 import StatsPanel from "./components/ui/StatsPanel"
+import GameController from "./game/GameController"
 
 export default function App() {
 
@@ -16,6 +17,7 @@ export default function App() {
 
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
+      <GameController />
       <GameScene />
       <StatsPanel />
     </div>

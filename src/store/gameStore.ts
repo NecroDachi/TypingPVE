@@ -18,24 +18,39 @@ interface GameState {
   combo: number
 
   monsterHP: number
-  playerHP: number
   monsterMaxHP: number
   bossLevel: number
 
-  word: string
-  typedLetters: string[]
+  bossAttacking: boolean
+  bossAttackIncoming: boolean
 
+  playerHP: number
+  playerMaxHP: number
+
+  // 🔥 TWO WORDS
+  attackWord: string
+  attackTyped: string[]
+
+  defendWord: string
+  defendTyped: string[]
+
+  startBossAttack: () => void
+  resolveBossAttack: () => void
   resetGame: () => void
   startAttack: () => void
   startDefense: () => void
+
   typeLetter: (key: string) => void
 }
 
-function randomWord(level: number = 1) {
-  return (generate({
-    minLength: 3 + level,
-    maxLength: 6 + level
-  }) as string).toLowerCase()
+function randomWord(): string {
+  const isLongWord = Math.random() < 0.15
+
+  if (isLongWord) {
+    return String(generate({ minLength: 8, maxLength: 12 }))
+  }
+
+  return String(generate({ minLength: 3, maxLength: 6 }))
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -45,7 +60,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   monsterHP: 100,
   monsterMaxHP: 100,
   bossLevel: 1,
+
   playerHP: 100,
+  playerMaxHP: 100,
 
   startTime: null,
   totalTyped: 0,
@@ -53,149 +70,190 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   combo: 0,
 
-  word: "",
-  typedLetters: [],
+  // ✅ INIT BOTH WORDS
+  attackWord: randomWord(),
+  attackTyped: [],
 
-  resetGame: () => {
+  defendWord: randomWord(),
+  defendTyped: [],
+
+  bossAttackIncoming: false,
+  bossAttacking: false,
+
+  startBossAttack: () => {
+    set({ bossAttackIncoming: true })
+
+    setTimeout(() => {
+      get().resolveBossAttack()
+    }, 1500)
+  },
+
+  resolveBossAttack: () => {
+
+    const blocked = get().defendTyped.length > 0
+
+    if (!blocked) {
+      const newHP = get().playerHP - 15
+      set({ playerHP: Math.max(newHP, 0) })
+    }
 
     set({
+      bossAttackIncoming: false,
+      defendTyped: [],
+      defendWord: randomWord()
+    })
+  },
+
+  resetGame: () => {
+    set({
       phase: "idle",
+
       monsterHP: 100,
       monsterMaxHP: 100,
       bossLevel: 1,
+
       playerHP: 100,
-      word: "",
-      typedLetters: [],
+      playerMaxHP: 100,
+
+      attackWord: randomWord(),
+      attackTyped: [],
+
+      defendWord: randomWord(),
+      defendTyped: [],
+
       startTime: null,
       totalTyped: 0,
       correctTyped: 0,
+
       combo: 0
     })
-
   },
 
   startAttack: () => {
-
     set({
       phase: "attack",
-      word: randomWord(get().bossLevel),
-      typedLetters: [],
+
+      attackWord: randomWord(),
+      attackTyped: [],
+
+      defendWord: randomWord(),
+      defendTyped: [],
+
       startTime: Date.now(),
       totalTyped: 0,
       correctTyped: 0,
       combo: 0
     })
-
   },
 
   startDefense: () => {
-
     set({
       phase: "defend",
-      word: randomWord(get().bossLevel),
-      typedLetters: []
+      defendWord: randomWord(),
+      defendTyped: []
     })
-
   },
 
+  // 🔥 MAIN LOGIC (AUTO ROUTING)
   typeLetter: (key) => {
 
-    const { word, typedLetters, phase } = get()
+    const state = get()
 
-    if (key === "Backspace") {
-      set({
-        typedLetters: typedLetters.slice(0, -1)
-      })
-      return
+    const {
+      attackWord,
+      attackTyped,
+      defendWord,
+      defendTyped
+    } = state
+
+    const nextAttackLetter = attackWord[attackTyped.length]
+    const nextDefendLetter = defendWord[defendTyped.length]
+
+    let lane: "attack" | "defend" | null = null
+
+    if (key === nextAttackLetter) {
+      lane = "attack"
+    } else if (key === nextDefendLetter) {
+      lane = "defend"
     }
 
-    if (typedLetters.length >= word.length) return
+    if (!lane) return
 
-    const correctKey = key === word[typedLetters.length]
+    // ================= ATTACK =================
+    if (lane === "attack") {
 
-    const nextLetters = [...typedLetters, key]
+      const nextLetters = [...attackTyped, key]
 
-    set({
-      typedLetters: nextLetters,
-      totalTyped: get().totalTyped + 1,
-      correctTyped: correctKey ? get().correctTyped + 1 : get().correctTyped,
-      combo: correctKey ? get().combo + 1 : 0
-    })
+      set({
+        attackTyped: nextLetters,
+        totalTyped: state.totalTyped + 1,
+        correctTyped: state.correctTyped + 1,
+        combo: state.combo + 1
+      })
 
-    if (nextLetters.length === word.length) {
+      if (nextLetters.length === attackWord.length) {
 
-      const correctWord = nextLetters.every((l, i) => l === word[i])
+        const elapsedMinutes = Math.max(
+          state.startTime
+            ? (Date.now() - state.startTime) / 60000
+            : 1,
+          0.01
+        )
 
-      if (correctWord) {
+        const wpm =
+          Math.round((state.correctTyped / 5) / elapsedMinutes)
 
-        if (phase === "attack") {
+        const damage =
+          Math.round(20 * (1 + state.combo * 0.05) * (1 + wpm / 100))
 
-          const state = get()
+        const newHP = Math.max(state.monsterHP - damage, 0)
 
-          const elapsedMinutes =
-            state.startTime
-              ? (Date.now() - state.startTime) / 60000
-              : 1
+        if (newHP <= 0) {
 
-          const wpm = Math.round((state.correctTyped / 5) / elapsedMinutes)
-
-          const comboMultiplier = 1 + state.combo * 0.05
-          const wpmMultiplier = 1 + wpm / 100
-
-          const baseDamage = 20
-
-          const damage = Math.round(
-            baseDamage * comboMultiplier * wpmMultiplier
-          )
-
-          const newHP = state.monsterHP - damage
-
-          console.log(
-            "⚔️ DAMAGE",
-            damage,
-            "| Combo:",
-            state.combo,
-            "| WPM:",
-            wpm
-          )
-
-          if (newHP <= 0) {
-
-            const nextMax = state.monsterMaxHP + 20
-
-            set({
-              bossLevel: state.bossLevel + 1,
-              monsterMaxHP: nextMax,
-              monsterHP: nextMax,
-              typedLetters: [],
-              word: randomWord(state.bossLevel + 1)
-            })
-
-          } else {
-
-            set({
-              monsterHP: newHP,
-              typedLetters: [],
-              word: randomWord(state.bossLevel)
-            })
-
-          }
-
-        }
-
-        if (phase === "defend") {
-
-          console.log("🛡 blocked attack")
+          const nextMax = state.monsterMaxHP + 20
 
           set({
-            typedLetters: [],
-            word: randomWord(get().bossLevel)
+            bossLevel: state.bossLevel + 1,
+            monsterMaxHP: nextMax,
+            monsterHP: nextMax,
+            attackTyped: [],
+            attackWord: randomWord()
+          })
+
+        } else {
+
+          set({
+            monsterHP: newHP,
+            attackTyped: [],
+            attackWord: randomWord()
           })
 
         }
 
       }
+    }
 
+    // ================= DEFEND =================
+    if (lane === "defend") {
+
+      const nextLetters = [...defendTyped, key]
+
+      set({
+        defendTyped: nextLetters,
+        totalTyped: state.totalTyped + 1,
+        correctTyped: state.correctTyped + 1
+      })
+
+      if (nextLetters.length === defendWord.length) {
+
+        console.log("🛡 DEFENSE SUCCESS")
+
+        set({
+          defendTyped: [],
+          defendWord: randomWord()
+        })
+
+      }
     }
 
   }

@@ -3,33 +3,33 @@ import { useGameStore } from "../../store/gameStore"
 
 type Props = {
   position: [number, number, number]
+  lane: "attack" | "defend"
 }
 
-export default function TypingPrompt({ position }: Props) {
+export default function TypingPrompt({ position, lane }: Props) {
 
-  const word = useGameStore(s => s.word)
-  const typedLetters = useGameStore(s => s.typedLetters)
-
-  // find first mistake
-  const firstErrorIndex = typedLetters.findIndex(
-    (l, i) => l !== word[i]
+  const word = useGameStore(s =>
+    lane === "attack" ? s.attackWord : s.defendWord
   )
+
+  const typed = useGameStore(s =>
+    lane === "attack" ? s.attackTyped : s.defendTyped
+  )
+
+  const firstErrorIndex = typed.findIndex((l, i) => l !== word[i])
 
   return (
     <group position={position}>
-        {word.split("").map((letter, i) => {
+      {word.split("").map((letter, i) => {
 
         let color = "white"
 
-        if (typedLetters[i]) {
-
-                    if (firstErrorIndex !== -1 && i >= firstErrorIndex) {
+        if (typed[i]) {
+          if (firstErrorIndex !== -1 && i >= firstErrorIndex) {
             color = "red"
-          }
-          else {
+          } else {
             color = "lime"
           }
-
         }
 
         return (
@@ -43,9 +43,7 @@ export default function TypingPrompt({ position }: Props) {
             {letter}
           </Text>
         )
-
       })}
-
     </group>
   )
 }

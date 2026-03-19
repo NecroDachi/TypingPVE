@@ -2,6 +2,7 @@ import { useFrame } from "@react-three/fiber"
 import { useRef } from "react"
 import { Group } from "three"
 import MonsterHP from "../ui/MonsterHp"
+import MonsterSlash from "../../game/effects/MonsterSlash"
 
 export default function Monster() {
 
@@ -14,7 +15,7 @@ export default function Monster() {
 
   return (
     <group ref={ref} position={[0, 1, -9]}>
-
+      <MonsterSlash />
       <MonsterHP position={[0,2,-2]} />
       <mesh>
         <boxGeometry args={[2.5, 2.5, 2.5]} />

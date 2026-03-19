@@ -9,7 +9,7 @@ export default function Attacker(){
         position={[-4,-2,4]}
         color="#4ECDC4"
       />
-      <TypingPrompt position={[-3,2,5]} />
+      <TypingPrompt position={[-3,2,5]} lane="attack"/>
     </>
   )
 

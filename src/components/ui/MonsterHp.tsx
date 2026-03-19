@@ -20,7 +20,7 @@ export default function MonsterHP({ position }: Props) {
 
   return (
     <group position={position}>
-
+    
       {/* HP BAR */}
       <mesh
         ref={hpRef}

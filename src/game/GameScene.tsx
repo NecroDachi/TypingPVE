@@ -4,6 +4,8 @@ import Defender from "../components/characters/Defender"
 import Monster from "../components/monsters/Monster"
 import Ground from "./Ground"
 import Lights from "./Lights"
+import BossAttackIndicator from "../components/ui/BossAttackIndicator"
+import PlayerHP from "../components/ui/PlayerHp"
 
 export default function GameScene() {
 
@@ -15,8 +17,11 @@ export default function GameScene() {
 
       <Lights  />
 
+      <PlayerHP />
       <Attacker />
       <Defender />
+
+      <BossAttackIndicator />
       <Monster />
 
       <Ground />
